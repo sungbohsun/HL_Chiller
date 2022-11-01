@@ -1,0 +1,1 @@
+cd ..\chiller_env\Scripts && activate && cd ../../HL_CHILLER_14 && streamlit run Home.py

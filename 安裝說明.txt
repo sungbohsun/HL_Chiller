@@ -1,0 +1,11 @@
+cd chiller_env\Scripts
+
+activate
+
+cd ..\..\
+
+pip uninstall streamlit
+
+set PATH=C:\Users\ZME\python\AUO\CH_v1.0.1\chiller_env;C:\Users\ZME\python\AUO\CH_v1.0.1\chiller_env\Scripts;C:\Users\ZME\python\AUO\CH_v1.0.1\chiller_env\Library\bin
+
+pip install .\package\streamlit-1.13.0-py2.py3-none-any.whl
