@@ -65,7 +65,7 @@ while True:
         values = values,
         date = date)
 
-    print(datetime.strftime(date, "%Y-%m-%d %H:%M:%S"))
+    print(date)
     print('回傳成功' if sec else '回傳失敗') 
     for c,v in zip(columns,values):
         print(c,v)

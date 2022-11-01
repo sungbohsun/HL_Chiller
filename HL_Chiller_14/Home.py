@@ -46,14 +46,6 @@ tab = st.tabs(['🌫️ 冷卻水出水溫優化','❄️ 冰水出水溫優化'
 
 with tab[0]:
 
-    col1 = st.columns([3,1])
-    with col1[0]: 
-        st.markdown(f"# ❄️ 14°C 高溫冰水系統")  
-    with col1[1]: 
-        st.caption('🧙 MagiChiller')
-        st.markdown('### 上次更新時間: '+str(res['Dtime']))
-
-
     col2 = st.columns([3,3,3,3,3,3,2.2], gap="large")
     with col2[0]: 
         st.subheader('冰水系統 KPI')
@@ -166,6 +158,7 @@ with tab[1]:
     with st.expander('AI控制RAC參考點'):
         col3 = st.columns(10)
         res['select'] = [c for i,c in enumerate(cols) if col3[i%9].checkbox(f'{c}',value=True if c in res['select'] else False)]
+        # res['select'] = [c for i,c in enumerate(cols) if col3[i%9].checkbox(f'{c}',value=True)]
 
     plot_df , fig = CH_RAC(df.iloc[-12:],res['select'])
     st.plotly_chart(fig, use_container_width=True)
