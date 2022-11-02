@@ -62,6 +62,10 @@ with tab[0]:
         st.subheader('冷卻水出水溫')
         st.metric("condenser supply_temp", f"{round(df1.condenser_supply_temp,2)}", f"{round(df1.condenser_supply_temp - df2.condenser_supply_temp,2)}")
     with col2[6]: 
+            Auto = st.checkbox('Auto')
+            if Auto: 
+                res['CT_low'] = round(df1.condenser_return_temp - 6,2)
+                res['CT_high'] = 29.0
             res['CT_low'] = st.number_input('AI冷卻水出水溫下限',step=0.1,value=res['CT_low'])
             res['CT_high'] = st.number_input('AI冷卻水出水溫上限',step=0.1,value= res['CT_high'])
             res['best_CT'],CT_fig = opt.plot( res['CT_low'] , res['CT_high'] )
@@ -103,7 +107,9 @@ with tab[0]:
         with st.expander("", expanded=True):
             st.subheader('📊 成本分析模式 (Cost Analysis Model)')
             st.markdown('**相同冷凍頓與濕球溫度下，不同趨近溫度(冷卻水出水溫-濕球溫度)對於系統成本影響**')
-            st.plotly_chart(CT_hist(all_df,df.iloc[-12:]), use_container_width=True)
+            Show = st.checkbox('Show')
+            if Show: 
+                st.plotly_chart(CT_hist(all_df,df.iloc[-12:]), use_container_width=True)
 
 
 with tab[1]:
