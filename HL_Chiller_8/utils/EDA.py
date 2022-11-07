@@ -3,6 +3,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.offline as offline
+import streamlit as st
 
 from stqdm import stqdm
 
@@ -182,3 +183,4 @@ def write_html(str_html):
 
 def Animation(fig): 
     return write_html(with_css_style(fig))
+

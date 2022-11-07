@@ -19,8 +19,8 @@ with st.sidebar:
     st.success('Magichiller 啟動成功!', icon="✅")
     st.warning('右上角顯示RUNING時，請暫停操作', icon="↗️")
 
-df = pd.read_csv(os.path.join('input','all_df.csv'))
-# df = pd.read_csv(os.path.join('input','small_df.csv'))
+# df = pd.read_csv(os.path.join('input','all_df.csv'))
+df = pd.read_csv(os.path.join('input','small_df.csv'))
 df1 = df.iloc[-1]
 df2 = df.iloc[-2]
 
@@ -47,7 +47,7 @@ tab = st.tabs(['🌫️ 冷卻水出水溫優化','❄️ 冰水出水溫優化'
 
 with tab[0]:
 
-    col2 = st.columns([3,3,3,3,3,3,2.2], gap="large")
+    col2 = st.columns([3,3,3,3,3,3,3], gap="large")
     with col2[0]: 
         st.subheader('冰水系統 KPI')
         st.metric("system KPI", f"{round(df1.system_KPI,4)}", f"{round(df1.system_KPI - df2.system_KPI,4)}")
@@ -58,18 +58,23 @@ with tab[0]:
         st.subheader('冷卻水回水溫')
         st.metric("system kwh", f"{round(df1.condenser_return_temp,0)}", f"{round(df1.condenser_return_temp - df2.condenser_return_temp,0)}")
     with col2[3]: 
-        st.subheader('冷卻水溫差')
-        st.metric("chiller RT", f"{round(df1.condenser_temp_diff,0)}", f"{round(df1.condenser_temp_diff - df2.condenser_temp_diff,0)}")
+        st.subheader('冷卻水塔頻率')
+        st.metric("chiller RT", f"{round(df1.CT_hz_max,0)}", f"{round(df1.CT_hz_max - df2.CT_hz_max,0)}")
     with col2[4]: 
         st.subheader('冷卻水出水溫')
         st.metric("condenser supply_temp", f"{round(df1.condenser_supply_temp,2)}", f"{round(df1.condenser_supply_temp - df2.condenser_supply_temp,2)}")
     with col2[6]: 
             res['Auto'] = st.checkbox('Auto CT low',value=res['Auto'])
-            if res['Auto']: 
-                res['CT_low'] = np.max([round(df1.condenser_return_temp - 6,2),21.0])
-            res['CT_low'] = st.number_input('AI冷卻水出水溫下限',step=0.1,value=res['CT_low'])
+            if res['Auto'] & (df1.CT_hz_max > 47) : 
+                CT_low = np.max([round(df1.condenser_return_temp - 6,2),21.0])
+                st.markdown(f'**AI冷卻水出水溫下限:**')
+                st.code(f'{CT_low}')
+                res['best_CT'],CT_fig = opt.plot( CT_low , res['CT_high'] )
+            else:
+                res['CT_low'] = st.number_input('AI冷卻水出水溫下限',step=0.1,value=res['CT_low'])
+                res['best_CT'],CT_fig = opt.plot( res['CT_low'] , res['CT_high'] )
+
             res['CT_high'] = st.number_input('AI冷卻水出水溫上限',step=0.1,value= res['CT_high'])
-            res['best_CT'],CT_fig = opt.plot( res['CT_low'] , res['CT_high'] )
     with col2[5]: 
         st.subheader('AI冷卻水出水溫')
         st.metric("best CT", f"{round(res['best_CT'],2)}")
@@ -170,10 +175,11 @@ with tab[1]:
 
     plot_df , fig = CH_RAC(df.iloc[-12:],res['select'])
     st.plotly_chart(fig, use_container_width=True)
+
     if max(plot_df.loads) > 90:
-        AI_supply_temp = df2.CH14_Tune - 0.12
+        AI_supply_temp = df1.chiller_supply_temp - 0.3
     else :
-        AI_supply_temp = df2.CH14_Tune + 0.12
+        AI_supply_temp = df1.chiller_supply_temp + 0.3
 
     res['AI_supply_temp'] = min(max(AI_supply_temp,res['CH_low']),res['CH_high'])
 
