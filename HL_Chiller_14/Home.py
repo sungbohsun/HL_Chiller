@@ -14,12 +14,13 @@ st.set_page_config(
 count = st_autorefresh(interval=300*1000, key="fizzbuzzcounter")
 # Run the autorefresh about every 2000 milliseconds (2 seconds) and stop
 # after it's been refreshed 100 times.
+
 with st.sidebar:
     st.success('Magichiller 啟動成功!', icon="✅")
     st.warning('右上角顯示RUNING時，請暫停操作', icon="↗️")
 
-all_df = pd.read_csv(os.path.join('input','all_df.csv'))
-df = pd.read_csv(os.path.join('input','small_df.csv'))
+df = pd.read_csv(os.path.join('input','all_df.csv'))
+# df = pd.read_csv(os.path.join('input','small_df.csv'))
 df1 = df.iloc[-1]
 df2 = df.iloc[-2]
 
@@ -51,33 +52,38 @@ with tab[0]:
         st.subheader('冰水系統 KPI')
         st.metric("system KPI", f"{round(df1.system_KPI,4)}", f"{round(df1.system_KPI - df2.system_KPI,4)}")
     with col2[1]: 
-        st.subheader('冰水系統用電')
-        st.metric("system kwh", f"{round(df1.system_kwh,0)}", f"{round(df1.system_kwh - df2.system_kwh,0)}")
-    with col2[2]: 
-        st.subheader('冰機總冷凍頓')
-        st.metric("chiller RT", f"{round(df1.chiller_RT,0)}", f"{round(df1.chiller_RT - df2.chiller_RT,0)}")
-    with col2[3]: 
         st.subheader('濕球溫度')
         st.metric("Wet bulb temp", f"{round(df1.Wet_bulb_temp,2)}", f"{round(df1.Wet_bulb_temp - df2.Wet_bulb_temp,2)}")
+    with col2[2]: 
+        st.subheader('冷卻水回水溫')
+        st.metric("system kwh", f"{round(df1.condenser_return_temp,0)}", f"{round(df1.condenser_return_temp - df2.condenser_return_temp,0)}")
+    with col2[3]: 
+        st.subheader('冷卻水溫差')
+        st.metric("chiller RT", f"{round(df1.condenser_temp_diff,0)}", f"{round(df1.condenser_temp_diff - df2.condenser_temp_diff,0)}")
     with col2[4]: 
         st.subheader('冷卻水出水溫')
         st.metric("condenser supply_temp", f"{round(df1.condenser_supply_temp,2)}", f"{round(df1.condenser_supply_temp - df2.condenser_supply_temp,2)}")
     with col2[6]: 
+            res['Auto'] = st.checkbox('Auto CT low',value=res['Auto'])
+            if res['Auto']: 
+                res['CT_low'] = np.max([round(df1.condenser_return_temp - 6,2),21.0])
             res['CT_low'] = st.number_input('AI冷卻水出水溫下限',step=0.1,value=res['CT_low'])
             res['CT_high'] = st.number_input('AI冷卻水出水溫上限',step=0.1,value= res['CT_high'])
             res['best_CT'],CT_fig = opt.plot( res['CT_low'] , res['CT_high'] )
     with col2[5]: 
         st.subheader('AI冷卻水出水溫')
         st.metric("best CT", f"{round(res['best_CT'],2)}")
-
+   
     st.markdown('***') 
     st.markdown("## 🌫️ 冷卻水出水溫優化")
-    st.markdown('**改變冷卻塔出水和回水溫度會增加一些成本，同時也會降低一些成本，提高冷卻塔出水和回水溫度會增加冷卻水泵和冰水主機運行成本，但會減少冷卻塔風扇需要做的工作量.因此最佳溫度不一定是塔能夠提供的最低溫度而是在所有設備的最低總運行成本（冰機 + 冷卻水泵 + 冷卻水塔）下能夠滿足特定負載的溫度。**')
     st.markdown('''
     |Controlled  Variable | Manipulated Variable | Optimization Criteria|
     |---------------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
     |CT water supply temperature|Air flowrateobtained bylevel of fan operation | Optimum Approach is selected to keep the sum **_Fan cost_** + **_Chiller compressor cost_** + **_CT pumping cost_** to a minimum|
     ''')
+    st.caption("")
+    st.markdown('📘 最佳化方法 (Optimization Criteria)')
+    st.markdown('**改變冷卻塔出水和回水溫度會增加一些成本，同時也會降低一些成本，提高冷卻塔出水和回水溫度會增加冷卻水泵和冰水主機運行成本，但會減少冷卻塔風扇需要做的工作量.因此最佳溫度不一定是塔能夠提供的最低溫度而是在所有設備的最低總運行成本（冰機 + 冷卻水泵 + 冷卻水塔）下能夠滿足特定負載的溫度。**')
     st.markdown('***')
     st.plotly_chart(CT_line(df=df,ai_col='CT_sug_temp'), use_container_width=True)
     col3 = st.columns([1,1.5], gap="large")
@@ -104,7 +110,9 @@ with tab[0]:
         with st.expander("", expanded=True):
             st.subheader('📊 成本分析模式 (Cost Analysis Model)')
             st.markdown('**相同冷凍頓與濕球溫度下，不同趨近溫度(冷卻水出水溫-濕球溫度)對於系統成本影響**')
-            st.plotly_chart(CT_hist(all_df,df.iloc[-12:]), use_container_width=True)
+            Show = st.checkbox('Show')
+            if Show: 
+                st.plotly_chart(CT_hist(df,df.iloc[-12:]), use_container_width=True)
 
 with tab[1]:
     col2 = st.columns([3,3,3,3,3,3,2.2], gap="large")
@@ -163,9 +171,9 @@ with tab[1]:
     plot_df , fig = CH_RAC(df.iloc[-12:],res['select'])
     st.plotly_chart(fig, use_container_width=True)
     if max(plot_df.loads) > 90:
-        AI_supply_temp = df1.chiller_supply_temp - 0.12
+        AI_supply_temp = df2.CH14_Tune - 0.12
     else :
-        AI_supply_temp = df1.chiller_supply_temp + 0.12
+        AI_supply_temp = df2.CH14_Tune + 0.12
 
     res['AI_supply_temp'] = min(max(AI_supply_temp,res['CH_low']),res['CH_high'])
 
@@ -177,7 +185,7 @@ with tab[1]:
     st.markdown('**相同冷凍頓與濕球溫度下，不同趨近溫度(冷卻水出水溫-濕球溫度)對於系統成本影響**')
     show = st.checkbox('show',value=False)
     if show:
-        st.plotly_chart(CH_hist(all_df,df.iloc[-12:]), use_container_width=True)
+        st.plotly_chart(CH_hist(df,df.iloc[-12:]), use_container_width=True)
 
     with open(os.path.join('config','setting.pkl'), 'wb') as f:
         pickle.dump(res, f)

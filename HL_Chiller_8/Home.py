@@ -50,22 +50,21 @@ with tab[0]:
         st.subheader('冰水系統 KPI')
         st.metric("system KPI", f"{round(df1.system_KPI,4)}", f"{round(df1.system_KPI - df2.system_KPI,4)}")
     with col2[1]: 
-        st.subheader('冰水系統用電')
-        st.metric("system kwh", f"{round(df1.system_kwh,0)}", f"{round(df1.system_kwh - df2.system_kwh,0)}")
-    with col2[2]: 
-        st.subheader('冰機總冷凍頓')
-        st.metric("chiller RT", f"{round(df1.chiller_RT,0)}", f"{round(df1.chiller_RT - df2.chiller_RT,0)}")
-    with col2[3]: 
         st.subheader('濕球溫度')
         st.metric("Wet bulb temp", f"{round(df1.Wet_bulb_temp,2)}", f"{round(df1.Wet_bulb_temp - df2.Wet_bulb_temp,2)}")
+    with col2[2]: 
+        st.subheader('冷卻水回水溫')
+        st.metric("system kwh", f"{round(df1.condenser_return_temp,0)}", f"{round(df1.condenser_return_temp - df2.condenser_return_temp,0)}")
+    with col2[3]: 
+        st.subheader('冷卻水溫差')
+        st.metric("chiller RT", f"{round(df1.condenser_temp_diff,0)}", f"{round(df1.condenser_temp_diff - df2.condenser_temp_diff,0)}")
     with col2[4]: 
         st.subheader('冷卻水出水溫')
         st.metric("condenser supply_temp", f"{round(df1.condenser_supply_temp,2)}", f"{round(df1.condenser_supply_temp - df2.condenser_supply_temp,2)}")
     with col2[6]: 
-            Auto = st.checkbox('Auto')
-            if Auto: 
-                res['CT_low'] = round(df1.condenser_return_temp - 6,2)
-                res['CT_high'] = 29.0
+            res['Auto'] = st.checkbox('Auto CT low',value=res['Auto'])
+            if res['Auto']: 
+                res['CT_low'] = np.max([round(df1.condenser_return_temp - 6,2),21.0])
             res['CT_low'] = st.number_input('AI冷卻水出水溫下限',step=0.1,value=res['CT_low'])
             res['CT_high'] = st.number_input('AI冷卻水出水溫上限',step=0.1,value= res['CT_high'])
             res['best_CT'],CT_fig = opt.plot( res['CT_low'] , res['CT_high'] )
@@ -75,12 +74,14 @@ with tab[0]:
 
     st.markdown('***') 
     st.markdown("## 🌫️ 冷卻水出水溫優化")
-    st.markdown('**改變冷卻塔出水和回水溫度會增加一些成本，同時也會降低一些成本，提高冷卻塔出水和回水溫度會增加冷卻水泵和冰水主機運行成本，但會減少冷卻塔風扇需要做的工作量.因此最佳溫度不一定是塔能夠提供的最低溫度而是在所有設備的最低總運行成本（冰機 + 冷卻水泵 + 冷卻水塔）下能夠滿足特定負載的溫度。**')
     st.markdown('''
     |Controlled  Variable | Manipulated Variable | Optimization Criteria|
     |---------------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
     |CT water supply temperature|Air flowrateobtained bylevel of fan operation | Optimum Approach is selected to keep the sum **_Fan cost_** + **_Chiller compressor cost_** + **_CT pumping cost_** to a minimum|
     ''')
+    st.caption("")
+    st.markdown('📘 最佳化方法 (Optimization Criteria)')
+    st.markdown('**改變冷卻塔出水和回水溫度會增加一些成本，同時也會降低一些成本，提高冷卻塔出水和回水溫度會增加冷卻水泵和冰水主機運行成本，但會減少冷卻塔風扇需要做的工作量.因此最佳溫度不一定是塔能夠提供的最低溫度而是在所有設備的最低總運行成本（冰機 + 冷卻水泵 + 冷卻水塔）下能夠滿足特定負載的溫度。**')
     st.markdown('***')
     st.plotly_chart(CT_line(df=df,ai_col='CT_Out_Tune'), use_container_width=True)
     col3 = st.columns([1,1.5], gap="large")
@@ -180,7 +181,7 @@ with tab[1]:
         st.metric("AI_supply_temp", f"{round(res['AI_supply_temp'],2)}")
 
     st.subheader('📊 成本分析模式 (Cost Analysis Model)')
-    st.markdown('**相同冷凍頓與濕球溫度下，不同趨近溫度(冷卻水出水溫-濕球溫度)對於系統成本影響**')
+    st.markdown('**相同冷凍頓與濕球溫度下，不同冰水出水溫對於系統成本影響**')
     show = st.checkbox('show',value=False)
     if show:
         st.plotly_chart(CH_hist(all_df,df.iloc[-12:]), use_container_width=True)

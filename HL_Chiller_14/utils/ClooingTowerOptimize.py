@@ -91,9 +91,9 @@ class CT_opt():
         return regr,pd.DataFrame({'true':y_test.flatten(),'pred':y_cv.flatten()})
 
     def train(self):
-        self.CT_cols  = ['condenser_supply_temp','CT_eff','Approach','Wet_bulb_temp','condenser_temp_diff','chiller_supply_temp','chiller_return_temp','loading','chiller_RT','CT_Total_KW']
-        self.CH_cols  = ['condenser_supply_temp','CT_eff','Approach','Wet_bulb_temp','condenser_temp_diff','chiller_supply_temp','chiller_return_temp','loading','chiller_RT','chiller_kwh']
-        self.CWP_cols = ['condenser_supply_temp','CT_eff','Approach','Wet_bulb_temp','condenser_temp_diff','chiller_supply_temp','chiller_return_temp','loading','chiller_RT','CWP_Total_KW']
+        self.CT_cols  = ['condenser_supply_temp','CT_eff','Approach','Wet_bulb_temp','condenser_temp_diff','chiller_supply_temp','loading','chiller_RT','CT_Total_KW']
+        self.CH_cols  = ['condenser_supply_temp','CT_eff','Approach','Wet_bulb_temp','condenser_temp_diff','chiller_supply_temp','loading','chiller_RT','chiller_kwh']
+        self.CWP_cols = ['condenser_supply_temp','CT_eff','Approach','Wet_bulb_temp','condenser_temp_diff','chiller_supply_temp','loading','chiller_RT','CWP_Total_KW']
         self.CT_regr_kw,  self.CT_kw_df  = self.CT_train(self.CT_cols[:-1],[self.CT_cols[-1]],2)
         self.CH_regr_kw,  self.CH_kw_df  = self.CH_train(self.CH_cols[:-1],[self.CH_cols[-1]],0)
         self.CWP_regr_kw, self.CWP_kw_df = self.CWP_train(self.CWP_cols[:-1],[self.CWP_cols[-1]],0)
@@ -107,7 +107,7 @@ class CT_opt():
         CT_eff = (self.df_last.condenser_return_temp - Tctws) / (self.df_last.condenser_return_temp - self.WB)
 
         a = np.array([Tctws,CT_eff,Approach])
-        b = np.repeat(np.array([self.df_last[['Wet_bulb_temp','condenser_temp_diff','chiller_supply_temp','chiller_return_temp','loading','chiller_RT']]]),100, axis=0)
+        b = np.repeat(np.array([self.df_last[['Wet_bulb_temp','condenser_temp_diff','chiller_supply_temp','loading','chiller_RT']]]),100, axis=0)
         self.CT_pred_kw = self.CT_regr_kw.predict(self.CT_pca.transform(self.CT_sc.transform(np.concatenate((a, b.T), axis=0).T)))
         self.CH_pred_kw = self.CH_regr_kw.predict(self.CH_pca.transform(self.CH_sc.transform(np.concatenate((a, b.T), axis=0).T)))
         self.CWP_pred_kw = self.CWP_regr_kw.predict(self.CWP_pca.transform(self.CWP_sc.transform(np.concatenate((a, b.T), axis=0).T)))
