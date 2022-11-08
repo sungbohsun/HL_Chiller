@@ -66,15 +66,15 @@ with tab[0]:
     with col2[6]: 
             res['Auto'] = st.checkbox('Auto CT low',value=res['Auto'])
             if res['Auto'] & (df1.CT_hz_max > 47) : 
-                CT_low = np.max([round(df1.condenser_return_temp - 6,2),21.0])
+                CT_low = np.max([round(df1.condenser_return_temp - 6,2),21.5])
                 st.markdown(f'**AI冷卻水出水溫下限:**')
                 st.code(f'{CT_low}')
+                res['CT_high'] = st.number_input('AI冷卻水出水溫上限',step=0.1,value= res['CT_high'])
                 res['best_CT'],CT_fig = opt.plot( CT_low , res['CT_high'] )
             else:
                 res['CT_low'] = st.number_input('AI冷卻水出水溫下限',step=0.1,value=res['CT_low'])
+                res['CT_high'] = st.number_input('AI冷卻水出水溫上限',step=0.1,value= res['CT_high'])
                 res['best_CT'],CT_fig = opt.plot( res['CT_low'] , res['CT_high'] )
-
-            res['CT_high'] = st.number_input('AI冷卻水出水溫上限',step=0.1,value= res['CT_high'])
     with col2[5]: 
         st.subheader('AI冷卻水出水溫')
         st.metric("best CT", f"{round(res['best_CT'],2)}")
@@ -166,7 +166,7 @@ with tab[1]:
     st.markdown("***")
     st.plotly_chart(CH_line(df=df,ai_col='CH14_Tune'), use_container_width=True)
     st.subheader('冰水重點控制閥位')
-    keyword = ['RAC_B1','L35','L60']
+    keyword = ['RAC_B1','L35','L60','PCW']
     cols = [ q for q in list(df.columns) if  sum([q.find(w) for w in keyword]) > -len(keyword)]
     with st.expander('AI控制RAC參考點'):
         col3 = st.columns(10)
@@ -177,9 +177,9 @@ with tab[1]:
     st.plotly_chart(fig, use_container_width=True)
 
     if max(plot_df.loads) > 90:
-        AI_supply_temp = df1.chiller_supply_temp - 0.3
+        AI_supply_temp = df.CH14_Tune.dropna().iloc[-1] - 0.12
     else :
-        AI_supply_temp = df1.chiller_supply_temp + 0.3
+        AI_supply_temp = df.CH14_Tune.dropna().iloc[-1] + 0.12
 
     res['AI_supply_temp'] = min(max(AI_supply_temp,res['CH_low']),res['CH_high'])
 

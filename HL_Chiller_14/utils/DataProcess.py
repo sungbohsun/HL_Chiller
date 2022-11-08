@@ -69,6 +69,7 @@ def Start(site):
         all_df["condenser_temp_diff"] = (all_df["condenser_return_temp"] - all_df["condenser_supply_temp"]) - 1
         all_df["loading"] = all_df[[f"chiller_{c:02}_loading" for c in chiller_num]].mean(axis=1)
         all_df['CT_hz_max'] = all_df[[f'CT{C:02d}_VFD_OUT' for C in range(2,12,2)]].max(axis=1)
+        all_df['CH_open_head'] = (all_df[[f"chiller_{c:02}_loading_A" for c in chiller_num]+[f"chiller_{c:02}_loading_B" for c in chiller_num]]>40).sum(axis=1)
 
     if site =="HL_14":
 
@@ -113,6 +114,7 @@ def Start(site):
         all_df["condenser_temp_diff"] = (all_df["condenser_return_temp"] - all_df["condenser_supply_temp"]) - 1
         all_df["loading"] = all_df[[f"chiller_{c:02}_loading" for c in chiller_num]].mean(axis=1)
         all_df['CT_hz_max'] = all_df[[f'CT_{C:02d}_VFD' for C in range(1,14,2)]].max(axis=1)
+        all_df['CH_open_head'] = (all_df[[f"chiller_{c:02}_loading_A" for c in chiller_num]+[f"chiller_{c:02}_loading_B" for c in chiller_num]]>40).sum(axis=1)
         
     if site =="TC_8":
 
